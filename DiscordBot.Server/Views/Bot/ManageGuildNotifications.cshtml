@@ -1,0 +1,31 @@
+﻿@model GuildNotificationViewModel
+
+@{
+    ViewData["Title"] = "Manage Notifications";
+}
+
+<!DOCTYPE html>
+
+<div class="row justify-content-center">
+    <div class="card-body col-6 mx-auto">
+        <form method="post">
+            <div class="card mb-4">
+                <div class="card-body" style="margin-top: 5%">
+                    <div class="form-check m-1 text-center">
+                        <input type="hidden" asp-for="@Model.NotifyId" />
+                        <input asp-for="@Model.Notify" class="form-check-input" />
+                        <label class="form-check-label" asp-for="@Model.Notify">
+                            Turn ON
+                        </label>
+                    </div>
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                </div>
+                <div class="card-body text-center">
+                    <input type="submit" asp-action="ManageGuildNotifications" value="Save" class="btn btn-primary"
+                           style="width:auto" />
+                    <a asp-action="ManageBot" class="btn btn-danger">Back</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

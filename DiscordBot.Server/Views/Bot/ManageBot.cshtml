@@ -1,0 +1,40 @@
+﻿@inject SignInManager<IdentityUser> SignInManager
+
+@{
+    ViewData["Title"] = "Manage Bot";
+}
+
+
+<div class="row justify-content-center">
+    <div class="col-auto">
+        <h5 class="text-center" style="margin-bottom:13%">Launch Bot:</h5>
+        @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin") || User.IsInRole("Super Admin"))
+        {
+            @*<input class="btn btn-success" type="button" value="Start" onclick="location.href='@Url.Action("startbot", "Bot")'" />
+            <input class="btn btn-danger" type="button" value="Stop" onclick="location.href='@Url.Action("stopbot", "Bot")'" />*@
+
+            <a class="btn btn-success" asp-action="StartBot" asp-controller="Bot">Start</a>
+            <a class="btn btn-danger" asp-action="StopBot"asp-controller="Bot">Stop</a>
+        }
+    </div>
+</div>
+<br />
+<h5 class="text-center">Manage:</h5>
+<div class="row justify-content-center">
+
+    <ul class="nav justify-content-center">
+        <li class="nav-item">
+            <a class="nav-link active" asp-action="ManageStreamers" asp-controller="Bot">Streamers</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-action="ManageGuildNotifications" asp-controller="Bot">Notifications</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-action="ManageGuildMessages" asp-controller="Bot">Messages</a>
+        </li>
+    </ul>
+</div>
+
+
+
+

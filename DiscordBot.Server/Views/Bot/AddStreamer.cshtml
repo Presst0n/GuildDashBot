@@ -1,0 +1,95 @@
+﻿@model StreamerViewModel
+@{
+    ViewData["Title"] = "Add Streamer";
+}
+
+<h1>Add Streamer</h1>
+
+@if (ViewBag.Alert == true)
+{
+    @if (ViewBag.Success == true)
+    {
+        <div id="myAlert" class="alert alert-success" onshow="setTimeout()">
+            <a href="#" class="close" data-dismiss="alert">&times;</a>
+            <strong>Success! A new streamer has been added.</strong>
+        </div>
+    }
+    else
+    {
+        <div id="myAlert" class="alert alert-danger" onshow="setTimeout()">
+            <a href="#" class="close" data-dismiss="alert">&times;</a>
+            <strong>Error! Streamer could not be added to the database. The request failed.</strong>
+        </div>
+    }
+}
+
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="onSubmit" method="post">
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="StreamerLogin">Nickname</label>
+                <input asp-for="StreamerLogin" class="form-control" placeholder="Streamer1337" onkeypress="handleSpace(event)" />
+                <span asp-validation-for="StreamerLogin" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Url">Url</label>
+                <input asp-for="Url" class="form-control" placeholder="https://www.twitch.tv/Streamer1337" onkeypress="handleSpace(event)"/>
+                <span asp-validation-for="Url" class="text-danger"></span>
+            </div>
+            <button id="btnSubmit" type="submit" class="btn btn-primary">Add</button>
+            <a class="btn btn-danger" asp-action="ManageStreamers" asp-controller="Bot">Cancel</a>
+        </form>
+    </div>
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+<script type="text/javascript">
+    //$(function () {
+
+    //    $('#btnSubmit').click(function (e) {
+    //        $('#myAlert').show('fade');
+
+    //        setTimeout(function () {
+    //            $('#myAlert').hide('fade');
+    //        }, 2000);
+
+    //    });
+
+    //    $('#linkClose').click(function () {
+    //        $('#myAlert').hide('fade');
+    //    });
+    //});
+
+
+    //window.onload = function () {
+    //    document.getElementById('#onSubmit').onsubmit = function () {
+
+    //    }
+    //}
+    //function myfunction() {
+    //    setTimeout
+    //}
+
+    function handleSpace(event) {
+        //handling ie and other browser keycode
+        var keyPressed = event.which || event.keyCode;
+
+        //Handling whitespace
+        //keycode of space is 32
+        if (keyPressed == 32) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
+
+
+    setTimeout(function () {
+        $('#myAlert').hide('fade');
+    }, 3000);
+
+</script>

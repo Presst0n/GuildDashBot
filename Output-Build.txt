@@ -1,0 +1,6 @@
+﻿1>------ Build started: Project: DiscordBot.Server, Configuration: Debug Any CPU ------
+1>Controllers\AdministrationController.cs(288,42,288,44): warning CS0168: The variable 'ex' is declared but never used
+1>DiscordBot.Server -> C:\dev\GuildBot\DiscordBot.Server\bin\Debug\netcoreapp2.2\DiscordBot.Server.dll
+1>DiscordBot.Server -> C:\dev\GuildBot\DiscordBot.Server\bin\Debug\netcoreapp2.2\DiscordBot.Server.Views.dll
+1>Done building project "DiscordBot.Server.csproj".
+========== Build: 1 succeeded, 0 failed, 8 up-to-date, 0 skipped ==========

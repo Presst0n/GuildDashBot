@@ -1,0 +1,122 @@
+﻿@model List<StreamerViewModel>
+
+@{
+    ViewData["Title"] = "Manage Streamers";
+}
+
+<style>
+    #mdb-preloader.loaded {
+        opacity: 0;
+        transition: .5s ease-in 1s;
+    }
+</style>
+
+
+
+<div class="col-auto" style="margin:3% 0 1% 0">
+    <a class="btn btn-primary" asp-action="AddStreamer" asp-controller="Bot">Add Streamer</a>
+    <a class="btn btn-primary" asp-action="ManageBot" asp-controller="Bot">Back</a>
+</div>
+
+@*<div id="mdb-preloader" class="flex-center">
+    <div class="flex-wrap active">
+        <div class="container h-auto d-flex justify-content-center align-items-center">
+            <div id="loading" class="spinner-border align-items-center" style="width: 3rem; height: 3rem; margin-top:15%;" role="status"></div>
+        </div>
+    </div>
+</div>*@
+
+<table class="table table-hover">
+
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Picture</th>
+            <th scope="col">Login</th>
+            <th scope="col">Stream Title</th>
+            <th scope="col">Status</th>
+            <th scope="col">Manage</th>
+        </tr>
+    </thead>
+
+    <tbody class="tableBody col-auto">
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            <tr>
+                <th scope="row">@(i + 1)</th>
+                <td><a href="@Model[i].Url" target="_blank"><img class="d-block" src="@Model[i].ProfileImage" alt="#" style="max-width: 55px; min-width: 50px"/></a></td>
+                <td>@Model[i].StreamerLogin</td>
+                <td>@Model[i].StreamTitle</td>
+                @if (@Model[i].IsStreaming == true)
+                {
+                    <td class="align-items-center"><img class="d-block mx-auto" style="margin-top:35%; filter:grayscale(0%)" id="" src="@Model[i].LiveIndicator" alt="Status" /></td>
+                }
+                else
+                {
+                    <td class="align-items-center"><img class="d-block mx-auto" style="margin-top:35%; filter:grayscale(95%)" id="" src="@Model[i].LiveIndicator" alt="Status" /></td>
+                }
+                <td>
+                    <div class="dropdown" style="margin-top:17%;">
+                        <a class="btn-sm btn-secondary dropdown-toggle align-items-center" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Action
+                        </a>
+
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <a class="dropdown-item" asp-action="EditStreamer" asp-route-id="@Model[i].UniqueID" asp-controller="Bot">Edit</a>
+
+                            <button data-id="@Model[i].UniqueID" type="button" id="btnModal" class="dropdown-item" data-toggle="modal" data-target="#exampleModal">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">Wat?</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to destroy this streamer?
+                                </div>
+                                <div class="modal-footer">
+                                    <form asp-action="DeleteStreamer" asp-controller="Bot" method="post">
+                                        <input type="hidden" data-id="" />
+                                        @Html.Hidden("id", "", new { @class = "hiddenid" })
+                                        <input type="submit" value="Yes" class="btn btn-danger" style="width:auto" />
+                                    </form>
+                                    <a class="btn btn-primary" data-dismiss="modal">No</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts
+{
+    <script type="text/javascript">
+        $(".dropdown-item").click(function () {
+            var passedID = $(this).data('id');  //get the id of the selected button
+            $('.modal-footer .hiddenid').val(passedID);  //set the id to the input on the modal
+        });
+
+
+        //$(window).on('load', function () {
+        //    $('#mdb-preloader').addClass('loaded');
+        //});
+
+        //window.onload = function () { document.getElementById("loading").style.display = "none" }
+    </script>
+}
+
+
+@*<script language="javascript" type="text/javascript">
+    window.onload = function () { document.getElementById("loading").style.display = "none" }
+</script>*@

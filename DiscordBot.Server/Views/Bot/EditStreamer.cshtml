@@ -1,0 +1,49 @@
+﻿@model StreamerViewModel
+@{
+    ViewData["Title"] = "Edit Streamer";
+}
+
+<h1>Edit Streamer</h1>
+
+<form method="post" class="mt-3">
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <input asp-for="UniqueID" type="hidden" class="form-control">
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="StreamerLogin" class="col-sm-2 col-form-label">Login:</label>
+        <div class="col-sm-10">
+            <input asp-for="StreamerLogin" class="form-control" onkeypress="handleSpace(event)"/>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="Url" class="col-sm-2 col-form-label">URL:</label>
+        <div class="col-sm-10">
+            <input asp-for="Url" class="form-control" onkeypress="handleSpace(event)"/>
+        </div>
+    </div>
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="ManageStreamers" class="btn btn-primary">Cancel</a>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+    function handleSpace(event) {
+        //handling ie and other browser keycode
+        var keyPressed = event.which || event.keyCode;
+
+        //Handling whitespace
+        //keycode of space is 32
+        if (keyPressed == 32) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
+
+</script>

@@ -1,0 +1,27 @@
+﻿@model IEnumerable<string>
+@{
+    ViewData["Title"] = "Log";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <h5>Full log (newest first)</h5>
+        <div class="col-12 pre-scrollable" style="background-color:black; max-height: 500px; min-height:500px">
+
+            <ul class="col-12 justify-content-center" id="LoggerWidgetList" style="list-style-type: none; margin-top:20px">
+                @foreach (var message in Model)
+                {
+                    <li class="log-item"><i class="fas fa-angle-right"></i>@message</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+    {
+    <script src="~/lib/@Html.Raw("@")aspnet/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/signalRConnection.js"></script>
+    <script src="~/js/fullLoggerSignalR.js"></script>
+    @*<script src="~/js/loggerSignalR.js"></script>*@
+}

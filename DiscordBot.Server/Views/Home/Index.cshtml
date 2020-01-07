@@ -1,0 +1,24 @@
+﻿@inject SignInManager<IdentityUser> SignInManager
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Auuu!</h1>
+    <p>Witaj w panelu kontrolnym discord bot-a Res Publici. :)</p>
+
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-auto">
+            @*@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin") || User.IsInRole("Super Admin"))
+                {
+                    <input class="btn btn-success" type="button" value="start bot" onclick="location.href='@Url.Action("startbot", "Home")'" />
+                    <input class="btn btn-danger" type="button" value="stop bot" onclick="location.href='@Url.Action("stopbot", "Home")'" />
+                }*@
+        </div>
+    </div>
+</div>
+
