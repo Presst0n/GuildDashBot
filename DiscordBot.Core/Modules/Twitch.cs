@@ -3,9 +3,9 @@ using Discord.Commands;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using DiscordBot.Core.Data.DataAccess;
 using DiscordBot.LibraryData.Models;
 using DiscordBot.Core.Modules.Helpers;
+using Abstractions.Db;
 
 namespace DiscordBot.Core.Modules
 {

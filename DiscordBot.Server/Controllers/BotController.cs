@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DiscordBot.Core;
 using DiscordBot.Server.Models;
 using DiscordBot.Server.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -11,8 +10,9 @@ using DiscordBot.Server.Resources.Constants;
 using DiscordBot.Server.Twitch;
 using Microsoft.EntityFrameworkCore;
 using Abstractions;
-using DiscordBot.LibraryData;
 using DiscordBot.LibraryData.Models;
+using DiscordBot.Server.Controllers.Helpers;
+using Abstractions.Db;
 
 namespace DiscordBot.Server.Controllers
 {
@@ -26,7 +26,7 @@ namespace DiscordBot.Server.Controllers
         private readonly ILogger _logger;
         private readonly BotEvents _botEvents;
 
-        public BotController(IGuildMessages guildMessageManager, IGuildNotifications guildNotificationsManager, ITwitchStreamers streamersManager, 
+        public BotController(IGuildMessages guildMessageManager, IGuildNotifications guildNotificationsManager, ITwitchStreamers streamersManager,
             IGuildBot bot, ILogger logger, BotEvents botEvents)
         {
             _guildMessageManager = guildMessageManager;
@@ -37,17 +37,10 @@ namespace DiscordBot.Server.Controllers
             _botEvents = botEvents;
         }
 
-        public List<GuildMessageViewModel> PopulateModel()
+        [HttpGet]
+        public IActionResult Commands()
         {
-            List<GuildMessageViewModel> guildMessages = new List<GuildMessageViewModel>()
-            {
-                new GuildMessageViewModel { MessageId = "raidinfo_msg", Message = "Type a message about your guild raids." },
-                new GuildMessageViewModel { MessageId = "raider_msg", Message = "Type a message for people getting Raider rank." },
-                new GuildMessageViewModel { MessageId = "welcome_msg", Message = "Type a welcome message for newcomers." },
-                new GuildMessageViewModel { MessageId = "rules_msg", Message = "Type some guild rules here." }
-            };
-
-            return guildMessages;
+            return View();
         }
 
         [HttpPost]
@@ -70,26 +63,12 @@ namespace DiscordBot.Server.Controllers
 
                     await _streamersManager.AddStreamerAsync(streamer);
                 }
-                else
-                {
-                    var s = await TwitchHelper.GetStreamer(streamer.StreamerLogin);
-                    var streamerDb = new StreamerDbModel
-                    {
-                        StreamerLogin = model.StreamerLogin,
-                        UrlAddress = model.Url,
-                        StreamerId = s.Users.Length != 0 ? s.Users[0].Id : "Unknown"
-                    };
-
-
-                    await _streamersManager.AddStreamerAsync(streamerDb);
-
-                    //ViewBag.ErrorMessage = $"Streamer with Login={model.StreamerLogin} cannot be found";
-                    //return View("NotFound");
-                }
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                throw;
+                ViewBag.ErrorTitle = $"Database error!";
+                ViewBag.ErrorMessage = $"Something went wrong. The attempt to save the streamer has failed";
+                _logger.Log($"Database Error: {ex.Message} -- {ex.StackTrace}");
             }
 
             return View(model);
@@ -149,8 +128,6 @@ namespace DiscordBot.Server.Controllers
                         StreamerLogin = model.StreamerLogin,
                         UrlAddress = model.Url,
                         UniqueID = Guid.NewGuid().ToString()
-                        //StreamerId = TwitchApi.GetStreamer(model.StreamerLogin).Result.Users[0].Id,
-                        //ProfileImage = TwitchApi.GetStreamer(model.StreamerLogin).Result.Users[0].ProfileImageUrl
                     };
 
                     var result = await TwitchHelper.GetAndMapStreamerDataAsync(dbModel);
@@ -197,7 +174,6 @@ namespace DiscordBot.Server.Controllers
 
         public async Task<IActionResult> StartBot()
         {
-
             try
             {
                 if (_bot.IsRunning())
@@ -211,14 +187,13 @@ namespace DiscordBot.Server.Controllers
             {
 
                 _logger.Log($"Coś się zesrało :/ {ex.Message} {ex.Data} - {ex.StackTrace} | {ex.InnerException}");
-                // Intercept error message using a _logger and display it on LogsView with option to save to file. 
 
                 //ViewBag.ErrorMessage = $"StackTrace: {ex.StackTrace}" +
                 //    $"Error Message: {ex.Message}";
                 //return View("NotFound");
             }
-
-            return View("ManageBot");
+            await Task.Delay(50);
+            return RedirectToAction("ManageBot");
         }
 
         public async Task<IActionResult> StopBot()
@@ -230,7 +205,8 @@ namespace DiscordBot.Server.Controllers
 
             await _bot.Stop();
 
-            return View("ManageBot");
+            await Task.Delay(50);
+            return RedirectToAction("ManageBot");
         }
 
 
@@ -269,7 +245,6 @@ namespace DiscordBot.Server.Controllers
             return View(model);
         }
 
-
         [HttpGet]
         public async Task<IActionResult> ManageGuildNotifications()
         {
@@ -307,9 +282,21 @@ namespace DiscordBot.Server.Controllers
             return View(model);
         }
 
+        //[HttpGet]
+        //public IActionResult ManageBot()
+        //{ 
+        //    ViewBag.IsRunning = _bot.IsRunning();
+        //    return View();
+        //}
+
         [HttpGet]
-        public IActionResult ManageBot()
+        public IActionResult ManageBot(bool value)
         {
+
+            ViewBag.IsRunning = _bot.IsRunning();
+
+            ViewBag.Alert = value;
+
             return View();
         }
 
@@ -322,20 +309,11 @@ namespace DiscordBot.Server.Controllers
 
             if (messages.Any())
             {
-                messages.ToList()
-                    .ForEach(m => model
-                    .Add(new GuildMessageViewModel() { MessageId = m.Id, Message = m.Message }));
-
-                var excludedIDs = new HashSet<string>(messages.
-                    Select(x => x.Id));
-
-                PopulateModel()
-                    .Where(s => !excludedIDs.Contains(s.MessageId)).ToList()
-                    .ForEach(x => model.Add(x));
+                model = BotHelper.ReplaceDefaultMessages(messages);
             }
             else
             {
-                model = PopulateModel();
+                model = BotHelper.PopulateModel();
             }
 
             return View(model);
@@ -378,18 +356,19 @@ namespace DiscordBot.Server.Controllers
             }
             else
             {
-                var data = PopulateModel();
+                var m = BotHelper.PopulateModel();
 
                 var guildMessage = new GuildMessageViewModel()
                 {
                     MessageId = id,
-                    Message = data.Find(x => x.MessageId == id).Message
+                    Message = m.Find(x => x.MessageId == id).Message
                 };
 
                 return View(guildMessage);
             }
         }
 
+        [HttpGet]
         public IActionResult Log()
         {
             var model = _logger.GetAll().Reverse();

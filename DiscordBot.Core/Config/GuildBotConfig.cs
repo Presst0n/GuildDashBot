@@ -5,7 +5,7 @@ namespace DiscordBot.Core.Config
 {
     public class GuildBotConfig
     {
-        private const string configFolder = "Config/ConfigFiles"; // For local usage: "../DiscordBot.Core/Config/ConfigFiles"
+        private const string configFolder = "../DiscordBot.Core/Config/ConfigFiles"; // For local usage: "../DiscordBot.Core/Config/ConfigFiles" "Config/ConfigFiles"
         private const string configFile = "settings.json";
         public static BotConfig bot;
 

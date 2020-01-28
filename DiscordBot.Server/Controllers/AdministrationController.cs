@@ -292,7 +292,7 @@ namespace DiscordBot.Server.Controllers
 
                     return View("ListUsers");
                 }
-                catch (DbUpdateException ex)
+                catch (DbUpdateException)
                 {
                     ViewBag.ErrorTitle = $"{user.UserName} is assigned to a role.";
                     ViewBag.ErrorMessage = $"User cannot be deleted when assigned to a role. " +

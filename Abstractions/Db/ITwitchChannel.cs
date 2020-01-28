@@ -1,7 +1,7 @@
 ﻿using DiscordBot.LibraryData.Models;
 using System.Threading.Tasks;
 
-namespace DiscordBot.LibraryData
+namespace Abstractions.Db
 {
     public interface ITwitchChannel
     {

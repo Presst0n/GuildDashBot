@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using DiscordBot.Server.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using DiscordBot.LibraryData;
 using DiscordBot.IoC;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -17,6 +16,12 @@ using DiscordBot.Server.EmailSender;
 using DiscordBot.Server.Hubs;
 using DiscordBot.Server.Data.ContextServices;
 using DiscordBot.Server.SuperAdmin;
+using DiscordBot.Server.BotData;
+using DiscordBot.Server.BotData.DataAccess;
+using Abstractions.Db;
+using AutoMapper;
+using Entities;
+using DiscordBot.Server.ViewModels;
 
 namespace DiscordBot.Server
 {
@@ -25,6 +30,13 @@ namespace DiscordBot.Server
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+            Mapper.Initialize(cfg =>
+            {
+                cfg.CreateMap<TextChannel, TextChannelViewModel>();
+                cfg.CreateMap<ServerDetail, ServerDetailViewModel>();
+                cfg.CreateMap<ChatMessage, ChatMessageViewModel>();
+            });
         }
 
         public IConfiguration Configuration { get; }
@@ -38,8 +50,8 @@ namespace DiscordBot.Server
             services.AddScoped<ITwitchChannel, TwitchChannelService>();
             services.AddScoped<IGuildMessages, GuildMessageService>();
             services.AddScoped<IGuildNotifications, GuildNotificationsService>();
-
             services.AddSingleton<BotEvents>();
+            services.AddSingleton<IDataAccess, DataAccess>();
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -47,10 +59,12 @@ namespace DiscordBot.Server
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-
+            // BotDbContext
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddDbContext<BotDbContext>();
 
             services.AddIdentity<IdentityUser, IdentityRole>(options =>
             {
@@ -92,7 +106,7 @@ namespace DiscordBot.Server
                     policy => policy.RequireRole("Admin", "Super Admin"));
 
                 options.AddPolicy("ManageBotPolicy",
-                    policy => policy.RequireRole("Moderator" ,"Admin", "Super Admin"));
+                    policy => policy.RequireRole("Moderator", "Admin", "Super Admin"));
             });
 
             services.AddSingleton(Configuration);
@@ -130,6 +144,7 @@ namespace DiscordBot.Server
             app.UseSignalR(routes =>
             {
                 routes.MapHub<BotHub>("/botHub");
+                routes.MapHub<ChatHub>("/chatHub");
             });
 
             app.UseMvc(routes =>

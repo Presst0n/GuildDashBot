@@ -8,6 +8,10 @@ a.navbar-brand {
   word-break: break-all;
 }
 
+.text-lime {
+    color: #95ff6e !important;
+}
+
 .bootstrap-select .dropdown-toggle:focus {
     outline: 0 !important;
 }
@@ -71,4 +75,50 @@ body {
   /* Set the fixed height of the footer here */
   height: 60px;
   line-height: 60px; /* Vertically center the text there */
+}
+
+/* Chat - Global
+-------------------------------------------------- */
+.server-list {
+    list-style-type: none;
+    padding: 0px;
+}
+
+.server-item {
+    background-color: #32383e;
+    margin: 0 10px 10px 10px;
+    padding: 10px;
+}
+
+.server-icon {
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+}
+
+/* Chat - Shared
+-------------------------------------------------- */
+.msg-avatar {
+    border-radius: 50%;
+    width: 100%;
+    padding: 7px;
+}
+
+.msg-username {
+    margin: 10px;
+}
+
+.msg-addon {
+    margin: 5px;
+    color: #999;
+}
+
+.msg-message {
+    display:block;
+    margin-left: 50px;
+}
+
+#scroll {
+    min-height: calc(75vh - 50px);
 }

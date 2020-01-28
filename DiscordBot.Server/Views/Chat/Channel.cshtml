@@ -1,0 +1,101 @@
+﻿@model ChatViewModel
+@{
+    ViewData["Title"] = Model.ActiveChannel.Name;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-4">
+            <ul class="server-list">
+                @foreach (var server in Model.AvailableServers)
+                {
+                    <li class="server-item d-flex align-content-center align-items-center">
+                        <img class="server-icon" src="@server.AvatarUrl"/>
+                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">@server.Name</a>
+                        <div class="dropdown-menu">
+                            @foreach (var channel in server.TextChannels)
+                            {
+                                <a class="dropdown-item" asp-controller="Chat" asp-action="Channel" asp-route-serverId="@server.Id" asp-route-channelId="@channel.Id">@channel.Name</a>
+                            }
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+        <div class="col-8">
+            <div class="row pre-scrollable" id="scroll" style="background-color:#22262a;">
+                <ul id="LocalChatList">
+                    @foreach (var message in Model.MessageBuffer)
+                    {
+                        <li>
+                            <div class="container-fluid">
+                                <div class="row d-flex align-content-center align-items-center">
+                                    <div class="col-1 p-0">
+                                        <img class="msg-avatar" src="@message.SenderAvatarUrl" />
+                                    </div>
+                                    <div class="col-11 p-0">
+                                        <span class="msg-username text-lime">@message.SenderUsername</span>
+                                        <span class="msg-addon">@message.SenderReputation rep</span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-1 p-0"></div>
+                                    <div class="col-12">
+                                        <span class="msg-message">@message.Message</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <div class="row">
+                <div class="input-group mb-3">
+                    <input id="ChatInput" type="text" class="form-control" placeholder="Say something..." aria-label="Message" aria-describedby="button-addon2">
+                    <div class="input-group-append">
+                        <button id="ChatSendBtn" class="btn btn-outline-success" type="button" id="button-addon2">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script src="~/lib/@Html.Raw("@")aspnet/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/signalRChatConnection.js"></script>
+    <script>
+        var $chatList = $("#LocalChatList");
+        var $chatBtn = $("#ChatSendBtn");
+        var $chatInput = $("#ChatInput");
+
+        connection.on("Chat-@Model.ActiveChannel.Id", addNewMessage);
+
+        function addNewMessage(message) {
+            $chatList.append('<li><div class="container-fluid"><div class="row d-flex align-content-center align-items-center"><div class="col-1 p-0"><img class="msg-avatar" src="' + message.senderAvatarUrl + '" /></div><div class="col-11 p-0"><span class="msg-username text-lime">' + message.senderUsername + '</span><span class="msg-addon">' + message.senderReputation + ' rep</span></div></div><div class="row"><div class="col-1 p-0"></div><div class="col-12"><span class="msg-message">' + message.message + '</span></div></div></div></li>');
+            scrollToBottom();
+        }
+
+        $chatBtn.click(sendChatMessage);
+
+        $chatInput.on('keypress', function (e) {
+            if(e.which === 13) { sendChatMessage(); }
+        });
+
+        function sendChatMessage() {
+            if ($chatInput.val() === "") { return; }
+            connection.invoke("SayInChannel", "@Model.ActiveServer.Id/@Model.ActiveChannel.Id", $chatInput.val()).catch((err) => {
+                return console.error(err.toString());
+            });
+            $chatInput.val("");
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            $("#scroll").stop().animate({ scrollTop: $("#scroll")[0].scrollHeight}, 1000);
+        }
+
+
+    </script>
+}

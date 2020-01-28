@@ -1,0 +1,36 @@
+﻿@model ChatViewModel
+@{
+    ViewData["Title"] = "Global";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-4">
+            <ul class="server-list">
+                @foreach (var server in Model.AvailableServers)
+                {
+                    <li class="server-item widget-body d-flex align-content-center align-items-center">
+                        <img class="server-icon" src="@server.AvatarUrl" />
+                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">@server.Name</a>
+                        <div class="dropdown-menu">
+                            @foreach (var channel in server.TextChannels)
+                            {
+                                <a class="dropdown-item" asp-controller="Chat" asp-action="Channel" asp-route-serverId="@server.Id" asp-route-channelId="@channel.Id">@channel.Name</a>
+                            }
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+        <div class="col-8">
+            <ul id="GlobalChatList"></ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+    {
+    <script src="~/lib/@Html.Raw("@")aspnet/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/signalRChatConnection.js"></script>
+    <script src="~/js/globalChatSignalR.js"></script>
+}

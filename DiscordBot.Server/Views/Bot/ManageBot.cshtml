@@ -2,19 +2,43 @@
 
 @{
     ViewData["Title"] = "Manage Bot";
+    var isRunning = ViewBag.IsRunning;
 }
 
+@if (ViewBag.Alert == true)
+{
+    @if (isRunning == false)
+    {
+        <div id="myAlert" class="alert alert-danger" onshow="setTimeout()">
+            <a href="#" class="close" data-dismiss="alert">&times;</a>
+            <strong>Error! In order to launch Chat you must turn on the bot first.</strong>
+        </div>
+    }
+}
 
 <div class="row justify-content-center">
+    <div class="col-12 text-center" style="margin:1% 0% 2% 0%">
+        <span class="text-secondary"><strong>Bot is currently: </strong></span>
+        @if (isRunning == true)
+        {
+            <span class="text-success"><strong>Online</strong></span>
+        }
+        else
+        {
+            <span class="text-danger"><strong>Offline</strong></span>
+        }
+    </div>
     <div class="col-auto">
-        <h5 class="text-center" style="margin-bottom:13%">Launch Bot:</h5>
+
         @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin") || User.IsInRole("Super Admin"))
         {
+            <h5 class="text-center" style="margin-bottom:10%">Launch Bot:</h5>
             @*<input class="btn btn-success" type="button" value="Start" onclick="location.href='@Url.Action("startbot", "Bot")'" />
             <input class="btn btn-danger" type="button" value="Stop" onclick="location.href='@Url.Action("stopbot", "Bot")'" />*@
 
             <a class="btn btn-success" asp-action="StartBot" asp-controller="Bot">Start</a>
-            <a class="btn btn-danger" asp-action="StopBot"asp-controller="Bot">Stop</a>
+            <a class="btn btn-danger" asp-action="StopBot" asp-controller="Bot">Stop</a>
+            <a class="btn btn-secondary" asp-action="Global" asp-controller="Chat">Chat</a>
         }
     </div>
 </div>
@@ -36,5 +60,15 @@
 </div>
 
 
+@section Scripts
+{
+    <script type="text/javascript">
 
+        setTimeout(function () {
+            $('#myAlert').hide('fade');
+        }, 7000);
+
+    </script>
+
+}
 

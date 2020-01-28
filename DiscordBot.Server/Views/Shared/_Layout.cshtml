@@ -11,14 +11,14 @@
     <environment include="Development">
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
 
-        @*<script src="~/lib/jquery/jquery.js"></script>
-            <script src="~/lib/jquery-validate/jquery.validate.js"></script>
-            <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>*@
+        <script src="~/lib/jquery/dist/jquery.js"></script>
+        <script src="~/lib/jquery-validate/jquery.validate.js"></script>
+        <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
     </environment>
     <environment exclude="Development">
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
 
-        <script src="~/lib/jquery/jquery.js"></script>
+        <script src="~/lib/jquery/dist/jquery.js"></script>
         <script src="~/lib/jquery-validate/jquery.validate.js"></script>
         <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
 
@@ -57,6 +57,7 @@
                         </li>
 
                         <li class="nav-item"><a asp-area="" asp-controller="Bot" asp-action="Log" class="nav-link">Logs</a></li>
+                        <li class="nav-item"><a asp-area="" asp-controller="Bot" asp-action="Commands" class="nav-link">Commands</a></li>
                     }
                 </ul>
                 <partial name="_LoginPartial" />

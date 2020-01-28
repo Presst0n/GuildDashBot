@@ -10,7 +10,7 @@ namespace DiscordBot.Core.Extensions
 {
     public static class TwitchServiceExtensions
     {
-        public static async Task<StreamerDbModel> MapStreamers(this StreamerDbModel _streamer, TwitchAPI api)
+        public static async Task<StreamerDbModel> MapStreamer(this StreamerDbModel _streamer, TwitchAPI api)
         {
             List<string> gameIds = new List<string>();
             List<string> streamerIds = new List<string>();
@@ -63,33 +63,25 @@ namespace DiscordBot.Core.Extensions
             return _streamer;
         }
 
-        public static Embed GetEmbededMessage(this StreamerDbModel mappedStreamer)
+        public static Embed GetEmbededData(this StreamerDbModel streamer)
         {
-            if (string.IsNullOrEmpty(mappedStreamer.StreamerLogin))
+            if (string.IsNullOrEmpty(streamer.StreamerLogin))
             {
                 throw new ArgumentException("Error! Streamer's name is null or empty.", "StreamerLogin");
             }
 
-            try
-            {
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.WithTitle($"{mappedStreamer.StreamerLogin} właśnie streamuje!");
-                builder.AddField("Tytuł:", $"{mappedStreamer.StreamTitle}", false);
-                builder.AddField("Widzowie:", $"{mappedStreamer.Viewers}", false);
-                builder.AddField("Gra:", $"{mappedStreamer.PlayedGame}", false);
-                builder.AddField("Obserwujący:", $"{mappedStreamer.TotalFollows}");
-                builder.WithThumbnailUrl($"{mappedStreamer.ProfileImage}");
-                builder.WithUrl($"{mappedStreamer.UrlAddress}");
-                builder.WithColor(Color.Blue);
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithTitle($"{streamer.StreamerLogin} właśnie streamuje!");
+            builder.AddField("Tytuł:", $"{streamer.StreamTitle}", false);
+            builder.AddField("Widzowie:", $"{streamer.Viewers}", false);
+            builder.AddField("Gra:", $"{streamer.PlayedGame}", false);
+            builder.AddField("Obserwujący:", $"{streamer.TotalFollows}");
+            builder.WithThumbnailUrl($"{streamer.ProfileImage}");
+            builder.WithUrl($"{streamer.UrlAddress}");
+            builder.WithColor(Color.Blue);
 
-                var output = builder.Build();
-                return output;
-            }
-            catch (Exception ex)
-            {
-                //Console.WriteLine($"{ex.Message}");
-                throw ex;
-            }
+            var output = builder.Build();
+            return output;
         }
     }
 }

@@ -15,8 +15,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
-    <ProjectReference Include="..\DiscordBot.Core.Data\DiscordBot.Core.Data.csproj" />
     <ProjectReference Include="..\DiscordBot.LibraryData\DiscordBot.LibraryData.csproj" />
+    <ProjectReference Include="..\Entities\Entities.csproj" />
   </ItemGroup>
 
   <ItemGroup>

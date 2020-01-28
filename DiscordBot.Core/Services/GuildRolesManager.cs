@@ -1,6 +1,7 @@
-﻿using Discord;
+﻿using Abstractions;
+using Abstractions.Db;
+using Discord;
 using Discord.WebSocket;
-using DiscordBot.Core.Data.DataAccess;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -20,11 +21,11 @@ namespace DiscordBot.Core.Services
         public Task InitializeAsync()
         {
             _client.UserJoined += AssignRoleToNewMember;
-            _client.GuildMemberUpdated += _client_GuildMemberUpdated;
+            _client.GuildMemberUpdated += OnGuildMemberUpdate;
             return Task.CompletedTask;
         }
 
-        private async Task _client_GuildMemberUpdated(SocketGuildUser userBefore, SocketGuildUser userAfter)
+        private async Task OnGuildMemberUpdate(SocketGuildUser userBefore, SocketGuildUser userAfter)
         {
             var notification = await _database.GetNotificationStatus();
 
@@ -58,11 +59,10 @@ namespace DiscordBot.Core.Services
             }
         }
 
-        public async Task NotifyNewMember(IGuildUser user)
+        private async Task NotifyNewMember(IGuildUser user)
         {
             var msg = await _database.GetMessageById("welcome_msg");
             await UserExtensions.SendMessageAsync(user, msg.Message);
         }
-
     }
 }
