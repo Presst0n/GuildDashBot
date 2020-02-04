@@ -5,6 +5,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Core.Config;
 using DiscordBot.Core.Services;
+using DiscordBot.Core.TwitchApi;
 using Entities;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -18,9 +19,9 @@ namespace DiscordBot.Core
     {
         public event EventHandler OnBotReceivedMessage;
 
-        private DiscordSocketClient _client;
-        private CommandService _cmdService;
-        private IServiceProvider _botServices;
+        private readonly DiscordSocketClient _client;
+        private readonly CommandService _cmdService;
+        private IServiceProvider _botServices = null;
         private IServiceCollection _collection;
         private readonly ILogger _logger;
         private readonly IDataAccess _dataAccess;
@@ -74,22 +75,6 @@ namespace DiscordBot.Core
         {
             if (IsRunning()) { return; }
 
-            if (_client == null && _cmdService == null)
-            {
-                _client = new DiscordSocketClient(new DiscordSocketConfig
-                {
-                    AlwaysDownloadUsers = true,
-                    MessageCacheSize = 50,
-                    LogLevel = LogSeverity.Verbose
-                });
-
-                _cmdService = new CommandService(new CommandServiceConfig
-                {
-                    LogLevel = LogSeverity.Verbose,
-                    CaseSensitiveCommands = false
-                });
-            }
-
             await _client.LoginAsync(TokenType.Bot, GuildBotConfig.bot.discordToken);
             await _client.StartAsync();
             _client.Ready += OnDiscordClientReady;
@@ -101,6 +86,7 @@ namespace DiscordBot.Core
             {
                 await InitializeServicesAsync();
             }
+            _client.Ready -= OnDiscordClientReady;
         }
 
         public async Task Stop()
@@ -128,7 +114,8 @@ namespace DiscordBot.Core
 
             await _botServices.GetRequiredService<CommandHandler>().InitializeAsync();
             await _botServices.GetRequiredService<GuildRolesManager>().InitializeAsync();
-            await _botServices.GetRequiredService<TwitchService>().InitializeService();
+            //await _botServices.GetRequiredService<TwitchService>().InitializeService();
+            await _botServices.GetRequiredService<StreamsHandler>().LaunchAsync();
         }
 
         private IServiceProvider SetupBotServices()
@@ -141,6 +128,9 @@ namespace DiscordBot.Core
             .AddSingleton<RaiderioService>()
             .AddSingleton(_dataAccess)
             .AddSingleton(_logger)
+            .AddSingleton(this)
+            .AddSingleton<StreamsHandler>()
+            .AddSingleton<TwitchApiProvider>()
             .BuildServiceProvider();
 
         public IEnumerable<ServerDetail> GetAvailableServers()

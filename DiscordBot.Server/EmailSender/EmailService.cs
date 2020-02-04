@@ -8,10 +8,8 @@ namespace DiscordBot.Server.EmailSender
 {
     public class EmailService : IEmailService
     {
-        public async Task<bool> SendEmailAsync(string email, string msg)
+        public async Task SendEmailAsync(string email, string msg)
         {
-            bool isSend = false;
-
             var body = msg;
             var message = new MailMessage();
 
@@ -37,17 +35,11 @@ namespace DiscordBot.Server.EmailSender
                 smtp.EnableSsl = true;
 
                 await smtp.SendMailAsync(message);
-
-                isSend = true;
             }
-
-            return isSend;
         }
 
-        public async Task<bool> SendEmailAsync(string email, string msg, string subject)
+        public async Task SendEmailAsync(string email, string msg, string subject)
         {
-            bool isSend = false;
-
             var body = msg;
             var message = new MailMessage();
 
@@ -73,11 +65,7 @@ namespace DiscordBot.Server.EmailSender
                 smtp.EnableSsl = true;
 
                 await smtp.SendMailAsync(message);
-
-                isSend = true;
             }
-
-            return isSend;
         }
     }
 }

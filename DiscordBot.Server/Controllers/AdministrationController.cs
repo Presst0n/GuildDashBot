@@ -330,6 +330,7 @@ namespace DiscordBot.Server.Controllers
 
                 user.Email = model.Email;
                 user.UserName = model.UserName;
+                user.EmailConfirmed = model.EmailConfirmed;
 
                 var result = await _userManager.UpdateAsync(user);
 
@@ -367,7 +368,8 @@ namespace DiscordBot.Server.Controllers
                 Email = user.Email,
                 UserName = user.UserName,
                 Claims = userClaims.Select(c => c.Type + " : " + c.Value).ToList(),
-                Roles = userRoles.ToList()
+                Roles = userRoles.ToList(),
+                EmailConfirmed = user.EmailConfirmed
             };
 
             return View(model);

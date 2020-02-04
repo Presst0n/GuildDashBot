@@ -60,30 +60,45 @@ namespace DiscordBot.Server.Resources.Constants {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Activation link - DO_NOT_REPLY.
+        /// </summary>
         public static string EMAIL_SUBJECT_DEFAULT {
             get {
                 return ResourceManager.GetString("EMAIL_SUBJECT_DEFAULT", resourceCulture);
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to discordbot.dashboard@gmail.com.
+        /// </summary>
         public static string FROM_EMAIL_ACCOUNT {
             get {
                 return ResourceManager.GetString("FROM_EMAIL_ACCOUNT", resourceCulture);
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to T0rn4d024.
+        /// </summary>
         public static string FROM_EMAIL_PASSWORD {
             get {
                 return ResourceManager.GetString("FROM_EMAIL_PASSWORD", resourceCulture);
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to smtp.gmail.com.
+        /// </summary>
         public static string SMTP_HOST_GMAIL {
             get {
                 return ResourceManager.GetString("SMTP_HOST_GMAIL", resourceCulture);
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to 587.
+        /// </summary>
         public static string SMTP_PORT_GMAIL {
             get {
                 return ResourceManager.GetString("SMTP_PORT_GMAIL", resourceCulture);

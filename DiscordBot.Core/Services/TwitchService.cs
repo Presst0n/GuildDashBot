@@ -4,12 +4,14 @@ using Discord;
 using Discord.WebSocket;
 using DiscordBot.Core.Config;
 using DiscordBot.Core.Extensions;
+using DiscordBot.Core.TwitchApi;
 using DiscordBot.LibraryData.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using TwitchLib.Api;
 using TwitchLib.Api.Helix.Models.Streams;
 
@@ -17,60 +19,71 @@ namespace DiscordBot.Core.Services
 {
     public class TwitchService
     {
-        private static TwitchAPI api;
+        private readonly TwitchAPI _twitchApi;
         private readonly DiscordSocketClient _client;
-        private IEnumerable<StreamerDbModel> _loadedStreamers;
-        private IDataAccess _database;
-        private ILogger _logger;
+        private readonly IDataAccess _database;
+        private readonly ILogger _logger;
+        private IEnumerable<StreamerDbModel> _loadedStreamers = null;
+        private readonly GuildBot _bot;
 
-        public TwitchService(IDataAccess database, DiscordSocketClient client, ILogger logger)
+        public TwitchService(IDataAccess database, DiscordSocketClient client, ILogger logger, GuildBot bot, TwitchApiProvider twitchApi)
         {
             _client = client;
             _database = database;
             _logger = logger;
+            _bot = bot;
+            _twitchApi = twitchApi.GetApi().Result;
         }
 
         public async Task InitializeService()
         {
-            api = new TwitchAPI();
-            api.Settings.ClientId = GuildBotConfig.bot.twitchClient;
-            api.Settings.AccessToken = GuildBotConfig.bot.twitchToken;
-
-            await ResetStreamers();
-            MonitorStreams();
+            //Timer t = new Timer(TimeSpan.FromMinutes(1).TotalMilliseconds)
+            //{
+            //    AutoReset = true
+            //};
+            //t.Elapsed += OnElapsed;
+            //t.Start();
+            await MonitorStreams();
         }
+
+        //private async void OnElapsed(object sender, ElapsedEventArgs e)
+        //{
+        //    await MonitorStreams();
+        //}
 
         private async Task MonitorStreams()
         {
             try
             {
-                while (true)
+                //while (true)
+                //{
+                //if (_bot.IsRunning())
+                //{
+                var logins = _database.GetStreamers().Result.Select(x => x.StreamerLogin).ToList();
+
+                if (logins.Count > 0)
                 {
-                    if (IsRunning())
+                    var response = await _twitchApi.Helix.Streams.GetStreamsAsync(null, null, 20, null, null, "all", null, logins);
+                    if (response != null)
                     {
-                        var logins = _database.GetStreamers().Result.Select(x => x.StreamerLogin).ToList();
-
-                        if (logins.Count > 0)
+                        if (response.Streams.Length != 0)
                         {
-                            var response = await api.Helix.Streams.GetStreamsAsync(null, null, 20, null, null, "all", null, logins);
-
-                            if (response != null)
-                            {
-                                if (response.Streams.Length != 0)
-                                {
-                                    _loadedStreamers = await _database.GetStreamers();
-                                    await ProcessStreams(response.Streams);
-                                }
-                                else
-                                {
-                                    await ResetStreamers();
-                                }
-                            }
+                            _loadedStreamers = await _database.GetStreamers();
+                            await ProcessStreams(response.Streams);
+                        }
+                        else
+                        {
+                            await ResetStreamers();
                         }
                     }
 
-                    await Task.Delay(TimeSpan.FromMinutes(3));
                 }
+                // }
+                _loadedStreamers = null;
+                //GC.Collect();
+
+                // await Task.Delay(TimeSpan.FromMinutes(3));
+                //}
             }
             catch (Exception ex)
             {
@@ -78,11 +91,7 @@ namespace DiscordBot.Core.Services
             }
         }
 
-        private bool IsRunning() =>
-            _client.ConnectionState == ConnectionState.Connected ||
-            _client.ConnectionState == ConnectionState.Connecting;
-
-        private async Task ResetStreamers()
+        public async Task ResetStreamers()
         {
             var loadedStreamers = await _database.GetStreamers();
             foreach (var streamer in loadedStreamers)
@@ -103,7 +112,7 @@ namespace DiscordBot.Core.Services
 
             foreach (var streamer in streamersOnline)
             {
-                var model = await streamer.MapStreamer(api);
+                var model = await streamer.MapStreamer(_twitchApi);
 
                 if (model.SentMessage == false)
                 {
@@ -124,10 +133,10 @@ namespace DiscordBot.Core.Services
             }
 
             var result = await GetStreamersOffline(streamingStreamers);
-            await SetOfflineAndSaveAsync(result);
+            await SetOffline(result);
         }
 
-        private async Task SetOfflineAndSaveAsync(IEnumerable<StreamerDbModel> streamers)
+        private async Task SetOffline(IEnumerable<StreamerDbModel> streamers)
         {
             foreach (var streamer in streamers)
             {
@@ -155,7 +164,7 @@ namespace DiscordBot.Core.Services
 
         private async Task<bool> SendNotification(StreamerDbModel streamer)
         {
-            if (!IsRunning()) { return false; }
+            if (!_bot.IsRunning()) { return false; }
 
             bool output = true;
             var channel = await _database.GetId();

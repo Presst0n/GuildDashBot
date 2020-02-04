@@ -4,7 +4,7 @@ namespace DiscordBot.Server.EmailSender
 {
     public interface IEmailService
     {
-        Task<bool> SendEmailAsync(string email, string msg);
-        Task<bool> SendEmailAsync(string email, string msg, string subject);
+        Task SendEmailAsync(string email, string msg);
+        Task SendEmailAsync(string email, string msg, string subject);
     }
 }
