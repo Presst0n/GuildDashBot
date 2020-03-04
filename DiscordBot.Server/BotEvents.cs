@@ -1,5 +1,5 @@
 ﻿using Abstractions;
-using DiscordBot.Core;
+using DiscordBot.Server;
 using DiscordBot.Server.Hubs;
 using Entities;
 using Microsoft.AspNetCore.SignalR;

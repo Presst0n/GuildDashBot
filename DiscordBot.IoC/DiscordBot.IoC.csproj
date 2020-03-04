@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
-    <ProjectReference Include="..\DiscordBot.Core\DiscordBot.Core.csproj" />
     <ProjectReference Include="..\Logger\Logger.csproj" />
   </ItemGroup>
 

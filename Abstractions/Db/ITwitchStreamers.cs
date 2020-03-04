@@ -11,6 +11,7 @@ namespace Abstractions.Db
         Task AddStreamerAsync(StreamerDbModel streamer);
         Task DeleteStreamerAsync(StreamerDbModel streamer);
         Task<IEnumerable<StreamerDbModel>> GetStreamers();
+        Task<StreamerDbModel> GetStreamerByUniqueId(string id);
         Task<StreamerDbModel> GetStreamerById(string id);
     }
 }

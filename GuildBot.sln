@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordBot.Server", "Discor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordBot.IoC", "DiscordBot.IoC\DiscordBot.IoC.csproj", "{5D190AEC-883D-4FC9-8773-408DAF93C981}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordBot.Core", "DiscordBot.Core\DiscordBot.Core.csproj", "{F354666C-734E-42EF-8F41-5F028268E6AA}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordBot.LibraryData", "DiscordBot.LibraryData\DiscordBot.LibraryData.csproj", "{59072B98-F187-4D72-82E3-AE83CB44D467}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Logger", "Logger\Logger.csproj", "{00BC06DD-5723-4F51-876C-E176B58A71EE}"
@@ -33,10 +31,6 @@ Global
 		{5D190AEC-883D-4FC9-8773-408DAF93C981}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D190AEC-883D-4FC9-8773-408DAF93C981}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D190AEC-883D-4FC9-8773-408DAF93C981}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F354666C-734E-42EF-8F41-5F028268E6AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F354666C-734E-42EF-8F41-5F028268E6AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F354666C-734E-42EF-8F41-5F028268E6AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F354666C-734E-42EF-8F41-5F028268E6AA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{59072B98-F187-4D72-82E3-AE83CB44D467}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{59072B98-F187-4D72-82E3-AE83CB44D467}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{59072B98-F187-4D72-82E3-AE83CB44D467}.Release|Any CPU.ActiveCfg = Release|Any CPU

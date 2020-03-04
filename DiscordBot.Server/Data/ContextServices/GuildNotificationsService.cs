@@ -31,8 +31,7 @@ namespace DiscordBot.Server.Data.ContextServices
             }
             else
             {
-                var result = _context.GuildNotifications.FirstOrDefault();
-                result.Id = input.Id;
+                var result = _context.GuildNotifications.FirstOrDefault(x => x.Id == input.Id);
                 result.Notify = input.Notify;
 
                 _context.GuildNotifications.Update(result);

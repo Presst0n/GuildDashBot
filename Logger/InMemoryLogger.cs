@@ -20,6 +20,10 @@ namespace Logger
         public void Log(string message)
         {
             var entry = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToLongTimeString()} : {message}";
+            if (Logs.Count > 99)
+            {
+                Logs.RemoveRange(0, 1);
+            }
             Logs.Add(entry);
             OnLog?.Invoke(this, new LogEventArgs { NewMessage = entry });
         }

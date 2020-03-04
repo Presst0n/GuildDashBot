@@ -26,7 +26,6 @@ namespace DiscordBot.Server.Data.ContextServices
             {
                 output.Message = model.Message;
                 _context.GuildMessages.Update(output);
-
             }
 
             await _context.SaveChangesAsync();
@@ -35,12 +34,12 @@ namespace DiscordBot.Server.Data.ContextServices
         public Task<GuildMessageDbModel> GetMessageById(string id)
         {
             return Task.FromResult(_context.GuildMessages
-                .Where(x => x.Id == id)
-                .FirstOrDefault());
+                .Where(x => x.Id == id).FirstOrDefault<GuildMessageDbModel>());
         }
 
         public Task<IEnumerable<GuildMessageDbModel>> GetMessages()
         {
+            if (!_context.GuildMessages.Any()) { return null; }
             return Task.FromResult<IEnumerable<GuildMessageDbModel>>(_context.GuildMessages);
         }
     }

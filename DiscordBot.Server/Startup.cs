@@ -15,13 +15,17 @@ using System;
 using DiscordBot.Server.EmailSender;
 using DiscordBot.Server.Hubs;
 using DiscordBot.Server.Data.ContextServices;
-using DiscordBot.Server.SuperAdmin;
-using DiscordBot.Server.BotData;
-using DiscordBot.Server.BotData.DataAccess;
 using Abstractions.Db;
 using AutoMapper;
 using Entities;
 using DiscordBot.Server.ViewModels;
+using Discord.WebSocket;
+using Discord;
+using Discord.Commands;
+using DiscordBot.Server.Bot;
+using DiscordBot.Server.Bot.Services;
+using Abstractions;
+using DiscordBot.Server.Twitch;
 
 namespace DiscordBot.Server
 {
@@ -44,14 +48,24 @@ namespace DiscordBot.Server
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services = services.AddGuildBotDependencies();
+            DiscordSocketClient discordClient = GetDiscordSocketClient();
+            CommandService cmdService = GetDiscordCommandService();
 
+            services = services.AddDependencies();
+            services.AddSingleton(discordClient);
+            services.AddSingleton(cmdService);
+            services.AddSingleton<IGuildBot, GuildBot>();
+            services.AddSingleton<BotEvents>();
+            services.AddSingleton<ICommandHandler, CommandHandler>();
+            services.AddSingleton<IGuildRolesManager, GuildRolesManager>();
+            services.AddSingleton<RaiderioService>();
+            services.AddSingleton<ITwitchLiveMonitor, TwitchLiveMonitor>();
+            services.AddSingleton<IBotDbService, BotDbService>();
             services.AddScoped<ITwitchStreamers, TwitchStreamersService>();
             services.AddScoped<ITwitchChannel, TwitchChannelService>();
             services.AddScoped<IGuildMessages, GuildMessageService>();
             services.AddScoped<IGuildNotifications, GuildNotificationsService>();
-            services.AddSingleton<BotEvents>();
-            services.AddSingleton<IDataAccess, DataAccess>();
+            services.AddScoped<TwitchHelper>();
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -59,12 +73,10 @@ namespace DiscordBot.Server
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-            // BotDbContext
+
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection")));
-
-            services.AddDbContext<BotDbContext>();
+                    Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Scoped);
 
             services.AddIdentity<IdentityUser, IdentityRole>(options =>
             {
@@ -113,10 +125,7 @@ namespace DiscordBot.Server
             services.AddSingleton<IAuthorizationHandler, CanEditOnlyOtherAdminRolesHandler>();
             services.AddSingleton<IAuthorizationHandler, SuperAdminHandler>();
             services.AddScoped<IEmailService, EmailService>();
-            services.AddSingleton<SuperAdminAccount>();
             services.AddSignalR();
-
-            services.BuildServiceProvider().GetRequiredService<SuperAdminAccount>().CreateSuperAdmin();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -153,6 +162,29 @@ namespace DiscordBot.Server
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+        }
+
+        private DiscordSocketClient GetDiscordSocketClient()
+        {
+            var discordClient = new DiscordSocketClient(new DiscordSocketConfig
+            {
+                AlwaysDownloadUsers = true,
+                MessageCacheSize = 50,
+                LogLevel = LogSeverity.Debug,
+                ConnectionTimeout = 30000,
+                LargeThreshold = 100
+            });
+            return discordClient;
+        }
+
+        private CommandService GetDiscordCommandService()
+        {
+            var cmdService = new CommandService(new CommandServiceConfig
+            {
+                LogLevel = LogSeverity.Verbose,
+                CaseSensitiveCommands = false
+            });
+            return cmdService;
         }
     }
 }

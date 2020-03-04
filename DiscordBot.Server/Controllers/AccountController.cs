@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using DiscordBot.Server.EmailSender;
 using DiscordBot.Server.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace DiscordBot.Server.Controllers
@@ -15,15 +17,20 @@ namespace DiscordBot.Server.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ILogger<AccountController> _logger;
         private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
-        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ILogger<AccountController> logger, IEmailService emailService)
+        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, RoleManager<IdentityRole> roleManager, ILogger<AccountController> logger, 
+            IEmailService emailService, IConfiguration configuration)
         {
             _userManager = userManager; 
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _logger = logger;
             _emailService = emailService;
+            _configuration = configuration;
         }
 
         [HttpPost]
@@ -153,9 +160,77 @@ namespace DiscordBot.Server.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult Login()
+        public async Task<IActionResult> Login()
         {
+            await CreateSuperAdmin();
+
             return View();
+        }
+
+        public async Task CreateSuperAdmin()
+        {
+            var userEmail = _configuration.GetSection("UserSettings").GetValue<string>("UserEmail");
+
+            var user = await _userManager.FindByEmailAsync(userEmail);
+
+            if (user is null)
+            {
+                var superUser = new IdentityUser()
+                {
+                    Email = userEmail,
+                    UserName = userEmail,
+                    EmailConfirmed = true
+                };
+
+                var tempPassword = _configuration.GetSection("UserSettings").GetValue<string>("UserPassword");
+
+                var result = await _userManager.CreateAsync(superUser, tempPassword);
+
+                if (result.Succeeded)
+                {
+                    var role = await _roleManager.FindByNameAsync("Super Admin");
+
+                    if (role is null)
+                    {
+                        var newRole = new IdentityRole()
+                        {
+                            Name = "Super Admin"
+                        };
+
+                        var roleResult = await _roleManager.CreateAsync(newRole);
+
+                        if (roleResult.Succeeded)
+                        {
+                            await _userManager.AddToRoleAsync(superUser, "Super Admin");
+                        }
+                    }
+                    else
+                    {
+                        await _userManager.AddToRoleAsync(superUser, "Super Admin");
+                    }
+
+                    var existingUserClaims = await _userManager.GetClaimsAsync(superUser);
+
+                    if (existingUserClaims.Count < 1)
+                    {
+                        List<Claim> AllClaims = new List<Claim>()
+                        {
+                            new Claim("Create Role", "true"),
+                            new Claim("Edit Role", "true"),
+                            new Claim("Delete Role", "true"),
+                            new Claim("Manage Claims", "true")
+                        };
+
+
+                        var claimResult = await _userManager.AddClaimsAsync(superUser, AllClaims);
+                    }
+                    else
+                    {
+
+                        await _userManager.AddClaimsAsync(superUser, existingUserClaims);
+                    }
+                }
+            }
         }
 
         [HttpPost]

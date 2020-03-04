@@ -17,7 +17,7 @@ namespace DiscordBot.Server.Data.ContextServices
 
         public async Task AddStreamerAsync(StreamerDbModel streamer)
         {
-            if(_context.TwitchStreamers.Where(x => /*x.StreamerLogin == streamer.StreamerLogin || */x.UniqueID == streamer.UniqueID).Count() < 1)
+            if(_context.TwitchStreamers.Where(x => x.UniqueID == streamer.UniqueID).Count() < 1)
             {
                 _context.TwitchStreamers.Add(new StreamerDbModel
                 {
@@ -33,10 +33,12 @@ namespace DiscordBot.Server.Data.ContextServices
                     UrlAddress = streamer.UrlAddress,
                     Viewers = streamer.Viewers
                 });
+
+                await _context.SaveChangesAsync();
             }
             else
             {
-                var existingStreamer = _context.TwitchStreamers.Where(x => /*x.StreamerLogin == streamer.StreamerLogin ||*/ x.UniqueID == streamer.UniqueID).FirstOrDefault();
+                var existingStreamer = _context.TwitchStreamers.Where(x => x.UniqueID == streamer.UniqueID).FirstOrDefault();
                 existingStreamer.StreamerLogin = streamer.StreamerLogin;
                 existingStreamer.StreamerId = streamer.StreamerId;
                 existingStreamer.UniqueID = streamer.UniqueID;
@@ -49,10 +51,15 @@ namespace DiscordBot.Server.Data.ContextServices
                 existingStreamer.UrlAddress = streamer.UrlAddress;
                 existingStreamer.Viewers = streamer.Viewers;
 
-                _context.TwitchStreamers.Update(existingStreamer);
-            }
+                //if (_context.TwitchStreamers.Any(x => x.UniqueID == streamer.UniqueID))
+                //{
+                //    _context.TwitchStreamers.Update(streamer);
+                //}
 
-            await _context.SaveChangesAsync();
+                _context.TwitchStreamers.Update(existingStreamer);
+
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task DeleteStreamerAsync(StreamerDbModel streamer)
@@ -68,14 +75,19 @@ namespace DiscordBot.Server.Data.ContextServices
             }
         }
 
-        public async Task<StreamerDbModel> GetStreamerById(string id)
+        public async Task<StreamerDbModel> GetStreamerByUniqueId(string id)
         {
             return await Task.FromResult(_context.TwitchStreamers.Where(x => x.UniqueID == id).FirstOrDefault());
         }
 
-        public Task<IEnumerable<StreamerDbModel>> GetStreamers()
+        public async Task<StreamerDbModel> GetStreamerById(string id)
         {
-            return Task.FromResult<IEnumerable<StreamerDbModel>>(_context.TwitchStreamers.ToList());
+            return await Task.FromResult(_context.TwitchStreamers.Where(x => x.StreamerId == id).FirstOrDefault());
+        }
+
+        public async Task<IEnumerable<StreamerDbModel>> GetStreamers()
+        {
+            return await Task.FromResult<IEnumerable<StreamerDbModel>>(_context.TwitchStreamers.ToList());
         }
     }
 }

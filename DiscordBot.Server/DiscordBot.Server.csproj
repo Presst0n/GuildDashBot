@@ -6,9 +6,14 @@
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Content Remove="Bot\Config\ConfigFiles\settings.json" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="8.0.0" />
+    <PackageReference Include="Discord.Net" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Azure.SignalR" Version="1.1.1" />
@@ -17,18 +22,27 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.6" />
     <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.4" />
+    <PackageReference Include="TwitchLib" Version="3.1.0" />
   </ItemGroup>
 
 
   <ItemGroup>
     <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
     <ProjectReference Include="..\DiscordBot.IoC\DiscordBot.IoC.csproj" />
+    <ProjectReference Include="..\DiscordBot.LibraryData\DiscordBot.LibraryData.csproj" />
   </ItemGroup>
 
 
   <ItemGroup>
     <Folder Include="Database\" />
     <Folder Include="Twitch\Extensions\" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Include="Bot\Config\ConfigFiles\settings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 

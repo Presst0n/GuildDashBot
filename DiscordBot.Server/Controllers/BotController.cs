@@ -13,6 +13,8 @@ using Abstractions;
 using DiscordBot.LibraryData.Models;
 using DiscordBot.Server.Controllers.Helpers;
 using Abstractions.Db;
+using DiscordBot.Server.Bot;
+using DiscordBot.Server.Bot.Services;
 
 namespace DiscordBot.Server.Controllers
 {
@@ -25,9 +27,14 @@ namespace DiscordBot.Server.Controllers
         private readonly IGuildBot _bot;
         private readonly ILogger _logger;
         private readonly BotEvents _botEvents;
+        private readonly TwitchHelper _twitchHelper;
+        private readonly ICommandHandler _commandHandler;
+        private readonly ITwitchLiveMonitor _liveMonitor;
+        private readonly IGuildRolesManager _guildRolesManager;
 
         public BotController(IGuildMessages guildMessageManager, IGuildNotifications guildNotificationsManager, ITwitchStreamers streamersManager,
-            IGuildBot bot, ILogger logger, BotEvents botEvents)
+            IGuildBot bot, ILogger logger, BotEvents botEvents, TwitchHelper twitchHelper, ICommandHandler commandHandler, 
+            ITwitchLiveMonitor liveMonitor, IGuildRolesManager guildRolesManager)
         {
             _guildMessageManager = guildMessageManager;
             _guildNotificationsManager = guildNotificationsManager;
@@ -35,6 +42,10 @@ namespace DiscordBot.Server.Controllers
             _bot = bot;
             _logger = logger;
             _botEvents = botEvents;
+            _twitchHelper = twitchHelper;
+            _commandHandler = commandHandler;
+            _liveMonitor = liveMonitor;
+            _guildRolesManager = guildRolesManager;
         }
 
         [HttpGet]
@@ -46,13 +57,13 @@ namespace DiscordBot.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> EditStreamer(StreamerViewModel model)
         {
-            var streamer = await _streamersManager.GetStreamerById(model.UniqueID);
+            var streamer = await _streamersManager.GetStreamerByUniqueId(model.UniqueID);
 
             try
             {
                 if (streamer != null)
                 {
-                    var s = await TwitchHelper.GetStreamer(streamer.StreamerLogin);
+                    var s = await _twitchHelper.GetStreamer(streamer.StreamerLogin);
                     streamer.StreamerLogin = model.StreamerLogin;
                     streamer.UrlAddress = model.Url;
 
@@ -77,7 +88,7 @@ namespace DiscordBot.Server.Controllers
         [HttpGet]
         public async Task<IActionResult> EditStreamer(string id)
         {
-            var streamer = await _streamersManager.GetStreamerById(id);
+            var streamer = await _streamersManager.GetStreamerByUniqueId(id);
 
             if (streamer != null)
             {
@@ -100,7 +111,7 @@ namespace DiscordBot.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteStreamer(string id)
         {
-            var streamer = await _streamersManager.GetStreamerById(id);
+            var streamer = await _streamersManager.GetStreamerByUniqueId(id);
 
             if (streamer is null)
             {
@@ -122,7 +133,6 @@ namespace DiscordBot.Server.Controllers
             {
                 if (model != null)
                 {
-
                     var dbModel = new StreamerDbModel
                     {
                         StreamerLogin = model.StreamerLogin,
@@ -130,7 +140,7 @@ namespace DiscordBot.Server.Controllers
                         UniqueID = Guid.NewGuid().ToString()
                     };
 
-                    var result = await TwitchHelper.GetAndMapStreamerDataAsync(dbModel);
+                    var result = await _twitchHelper.GetAndMapStreamerDataAsync(dbModel);
 
                     if (result is null)
                     {
@@ -150,15 +160,17 @@ namespace DiscordBot.Server.Controllers
                         {
                             ViewBag.Success = false;
                         }
+                        if (_liveMonitor.IsEnabled())
+                        {
+                            await _liveMonitor.CheckNewChannelsToMonitor();
+                        }
                     }
-
                 }
                 else
                 {
                     ViewBag.ErrorMessage("Something went wrong. :(");
                     return View("NotFound");
                 }
-
             }
 
             return View(model);
@@ -181,19 +193,22 @@ namespace DiscordBot.Server.Controllers
                     return BadRequest("Bot is already running.");
                 }
 
+                await _commandHandler.InitializeAsync();
+                await _guildRolesManager.InitializeAsync();
                 await _bot.Connect();
+                await _liveMonitor.StartLiveMonitor();
+                await Task.Delay(50);
+                return RedirectToAction("ManageBot");
             }
             catch (Exception ex)
             {
+                _logger.Log($"Starting bot has failed: {ex.Message} {ex.Data} - {ex.StackTrace}");
 
-                _logger.Log($"Coś się zesrało :/ {ex.Message} {ex.Data} - {ex.StackTrace} | {ex.InnerException}");
-
-                //ViewBag.ErrorMessage = $"StackTrace: {ex.StackTrace}" +
-                //    $"Error Message: {ex.Message}";
-                //return View("NotFound");
+                ViewBag.ErrorTitle = $"Houston we have a problem :/";
+                ViewBag.ErrorMessage = $"Error Message: {ex.Message}" +
+                    $"Stack trace: {ex.StackTrace}";
+                return View("Error");
             }
-            await Task.Delay(50);
-            return RedirectToAction("ManageBot");
         }
 
         public async Task<IActionResult> StopBot()
@@ -203,7 +218,17 @@ namespace DiscordBot.Server.Controllers
                 return BadRequest("Bot is not running.");
             }
 
-            await _bot.Stop();
+
+            try
+            {
+                await _commandHandler.Clear();
+                await _guildRolesManager.Clear();
+                await _bot.Stop();
+            }
+            catch (Exception ex)
+            {
+                _logger.Log($"{ex.Message} - {ex.StackTrace}");
+            }
 
             await Task.Delay(50);
             return RedirectToAction("ManageBot");
@@ -215,34 +240,71 @@ namespace DiscordBot.Server.Controllers
         {
             var streamers = await _streamersManager.GetStreamers();
             var model = new List<StreamerViewModel>();
-
-            if (streamers != null)
+            try
             {
-                foreach (var streamer in streamers)
+                if (streamers != null)
                 {
-                    if (streamer.ProfileImage == null || streamer.ProfileImage.Length == 0)
+                    List<Task<StreamerDbModel>> tasks = new List<Task<StreamerDbModel>>();
+                    foreach (var streamer in streamers)
                     {
-                        streamer.ProfileImage = Images.TwitchDefaultPicture;
+                        tasks.Add(Task.Run(() => _twitchHelper.GetMappedStreamerAsync(streamer)));
                     }
 
-                    model.Add(new StreamerViewModel
+                    var result = await Task.WhenAll(tasks);
+                    tasks.Clear();
+                    foreach (var s in result)
                     {
-                        IsStreaming = streamer.IsStreaming,
-                        PlayedGame = streamer.PlayedGame,
-                        ProfileImage = streamer.ProfileImage,
-                        StreamerId = streamer.StreamerId,
-                        StreamerLogin = streamer.StreamerLogin,
-                        StreamTitle = streamer.StreamTitle,
-                        TotalFollows = streamer.TotalFollows,
-                        Viewers = streamer.Viewers,
-                        Url = streamer.UrlAddress,
-                        LiveIndicator = Images.OnlineStatus,
-                        UniqueID = streamer.UniqueID
-                    });
+                        model.Add(new StreamerViewModel
+                        {
+                            IsStreaming = s.IsStreaming,
+                            //PlayedGame = s.PlayedGame,
+                            ProfileImage = s.ProfileImage,
+                            StreamerId = s.StreamerId,
+                            StreamerLogin = s.StreamerLogin,
+                            StreamTitle = s.StreamTitle,
+                            //TotalFollows = s.TotalFollows,
+                            //Viewers = s.Viewers,
+                            //Url = s.UrlAddress,
+                            LiveIndicator = Images.OnlineStatus,
+                            UniqueID = s.UniqueID
+                        });
+                    }
+
+                    //foreach (var streamer in streamers)
+                    //{
+                    //    var mappitoStrimero = await _twitchHelper.GetAndMapStreamerDataAsync(streamer);
+
+                    //    if (mappitoStrimero.ProfileImage == null || mappitoStrimero.ProfileImage.Length == 0)
+                    //    {
+                    //        mappitoStrimero.ProfileImage = Images.TwitchDefaultPicture;
+                    //    }
+
+                    //    model.Add(new StreamerViewModel
+                    //    {
+                    //        IsStreaming = mappitoStrimero.IsStreaming,
+                    //        PlayedGame = mappitoStrimero.PlayedGame,
+                    //        ProfileImage = mappitoStrimero.ProfileImage,
+                    //        StreamerId = mappitoStrimero.StreamerId,
+                    //        StreamerLogin = mappitoStrimero.StreamerLogin,
+                    //        StreamTitle = mappitoStrimero.StreamTitle,
+                    //        TotalFollows = mappitoStrimero.TotalFollows,
+                    //        Viewers = mappitoStrimero.Viewers,
+                    //        Url = mappitoStrimero.UrlAddress,
+                    //        LiveIndicator = Images.OnlineStatus,
+                    //        UniqueID = mappitoStrimero.UniqueID
+                    //    });
+                    //}
                 }
+
+                ModelState.Clear();
+                return View(model);
             }
-            ModelState.Clear();
-            return View(model);
+            catch (Exception ex)
+            {
+                ViewBag.ErrorTitle = $"Houston we have a problem :/";
+                ViewBag.ErrorMessage = $"Error message:{ex.Message} Stack trace: {ex.StackTrace}";
+                return View("Error");
+            }
         }
 
         [HttpGet]

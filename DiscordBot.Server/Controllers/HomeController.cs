@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using DiscordBot.Server.Models;
-using DiscordBot.Core;
+using DiscordBot.Server;
 using DiscordBot.LibraryData;
 using Microsoft.Extensions.DependencyInjection;
 using Abstractions;

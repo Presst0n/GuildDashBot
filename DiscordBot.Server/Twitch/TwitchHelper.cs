@@ -1,5 +1,5 @@
-﻿using DiscordBot.Core.Config;
-using DiscordBot.LibraryData.Models;
+﻿using DiscordBot.LibraryData.Models;
+using DiscordBot.Server.Bot.Config;
 using DiscordBot.Server.Resources.Constants;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,18 +8,18 @@ using TwitchLib.Api.Helix.Models.Users;
 
 namespace DiscordBot.Server.Twitch
 {
-    public static class TwitchHelper
+    public class TwitchHelper
     {
-        private static readonly TwitchAPI api;
+        private readonly TwitchAPI api;
 
-        static TwitchHelper()
+        public TwitchHelper()
         {
             api = new TwitchAPI();
             api.Settings.ClientId = GuildBotConfig.bot.twitchClient;
             api.Settings.AccessToken = GuildBotConfig.bot.twitchToken;
         }
 
-        public async static Task<GetUsersResponse> GetStreamer(string login)
+        public async Task<GetUsersResponse> GetStreamer(string login)
         {
             List<string> logins = new List<string>
             {
@@ -29,7 +29,7 @@ namespace DiscordBot.Server.Twitch
             return await api.Helix.Users.GetUsersAsync(null, logins, null);
         }
 
-        public static async Task<StreamerDbModel> GetAndMapStreamerDataAsync(this StreamerDbModel _streamer)
+        public async Task<StreamerDbModel> GetAndMapStreamerDataAsync(StreamerDbModel _streamer)
         {
             List<string> gameIds = new List<string>();
             List<string> streamerIds = new List<string>();
@@ -96,6 +96,70 @@ namespace DiscordBot.Server.Twitch
                 {
                     _streamer.ProfileImage = Images.TwitchDefaultPicture;
                     _streamer.PlayedGame = "Unknown";
+                    _streamer.StreamTitle = "Unknown";
+                    _streamer.StreamerId = "Unknown";
+                    _streamer.IsStreaming = false;
+                }
+            }
+
+            return _streamer;
+        }
+
+
+        public async Task<StreamerDbModel> GetMappedStreamerAsync(StreamerDbModel _streamer)
+        {
+            List<string> gameIds = new List<string>();
+            List<string> streamerIds = new List<string>();
+            List<string> logins = new List<string>
+            {
+                _streamer.StreamerLogin
+            };
+
+            var streamersOnline = await api.Helix.Streams.GetStreamsAsync(null, null, 20, null, null, "all", null, logins);
+
+            if (streamersOnline.Streams.Length != 0)
+            {
+                streamerIds.Add(streamersOnline.Streams[0].UserId);
+
+                var streamerData = await api.Helix.Users.GetUsersAsync(streamerIds, null, null);
+
+                _streamer.StreamerId = streamerData.Users[0].Id;
+                _streamer.IsStreaming = true;
+
+                if (streamersOnline.Streams[0].Title.Length != 0)
+                {
+                    if (streamersOnline.Streams[0].Title.Contains("\n"))
+                    {
+                        var title = streamersOnline.Streams[0].Title;
+                        title = title.Replace("\n", " ");
+                        _streamer.StreamTitle = title;
+                    }
+                    else
+                    {
+                        _streamer.StreamTitle = streamersOnline.Streams[0].Title;
+                    }
+                }
+                else
+                {
+                    _streamer.StreamTitle = "Brak tytułu";
+                }
+
+                _streamer.ProfileImage = streamerData.Users[0].ProfileImageUrl;
+            }
+            else
+            {
+                var result = await api.Helix.Users.GetUsersAsync(null, logins, null);
+
+                if (result.Users.Length != 0)
+                {
+                    _streamer.ProfileImage = result.Users[0].ProfileImageUrl;
+                    _streamer.StreamTitle = "Unknown";
+                    _streamer.StreamerId = result.Users[0].Id;
+                    _streamer.IsStreaming = false;
+                }
+                else
+                {
+                    _streamer.ProfileImage = Images.TwitchDefaultPicture;
                     _streamer.StreamTitle = "Unknown";
                     _streamer.StreamerId = "Unknown";
                     _streamer.IsStreaming = false;

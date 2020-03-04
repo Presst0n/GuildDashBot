@@ -85,7 +85,7 @@
                                 <div class="modal-footer">
                                     <form asp-action="DeleteStreamer" asp-controller="Bot" method="post">
                                         <input type="hidden" data-id="" />
-                                        @Html.Hidden("id", "", new { @class = "hiddenid" })
+                                            @Html.Hidden("id", "", new { @class = "hiddenid" })
                                         <input type="submit" value="Yes" class="btn btn-danger" style="width:auto" />
                                     </form>
                                     <a class="btn btn-primary" data-dismiss="modal">No</a>
